@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
 using System.Threading.Tasks;
-using DbProviderWrapper.Interfaces;
 using DbProviderWrapper.MsSql;
 
 #endregion
@@ -20,6 +19,7 @@ namespace DbProviderWrapper.Persistance
         private readonly string _strLoadCommand;
         private readonly string _strSaveCommand;
         private readonly string _strUpdateCommand;
+        private readonly string _strImportCommand;
 
         private readonly IMsSqlProvider _msSqlProvider;
 
@@ -32,12 +32,14 @@ namespace DbProviderWrapper.Persistance
             string strSaveCommand,
             string strUpdateCommand,
             string strDeleteCommand,
+            string strImportCommand,
             IMsSqlProvider msSqlProvider)
         {
             _strLoadCommand = strLoadCommand;
             _strSaveCommand = strSaveCommand;
             _strUpdateCommand = strUpdateCommand;
             _strDeleteCommand = strDeleteCommand;
+            _strImportCommand = strImportCommand;
             _msSqlProvider = msSqlProvider;
         }
 
@@ -183,6 +185,48 @@ namespace DbProviderWrapper.Persistance
             return lSimpleDataTable;
         }
 
+        public SimpleDataTable<TTYPE> ImportTable(DataTable dataTable)
+        {
+            SimpleDataTable<TTYPE> lSimpleDataTable = new SimpleDataTable<TTYPE>();
+            try
+            {
+                TTYPE lInstance = Activator.CreateInstance<TTYPE>();
+                lSimpleDataTable.BindColumns(UpdateModel(lInstance));
+                List<SqlParameter> lSqlParameters = ImportModels(dataTable);
+                _msSqlProvider
+                    .StoredProc(_strUpdateCommand, lSqlParameters ?? new List<SqlParameter>(), ref lSimpleDataTable,
+                        LoadModel);
+            }
+            catch (Exception lException)
+            {
+                _msSqlProvider.Logger.WriteExceptionLog("Import error.", lException);
+                return null;
+            }
+
+            return lSimpleDataTable;
+        }
+
+        public async Task<SimpleDataTable<TTYPE>> ImportTableAsync(DataTable dataTable)
+        {
+            SimpleDataTable<TTYPE> lSimpleDataTable = new SimpleDataTable<TTYPE>();
+            try
+            {
+                TTYPE lInstance = Activator.CreateInstance<TTYPE>();
+                lSimpleDataTable.BindColumns(UpdateModel(lInstance));
+                List<SqlParameter> lSqlParameters = ImportModels(dataTable);
+                lSimpleDataTable = await _msSqlProvider
+                    .StoredProcAsync(_strImportCommand, lSqlParameters ?? new List<SqlParameter>(), lSimpleDataTable,
+                        LoadModel);
+            }
+            catch (Exception lException)
+            {
+                _msSqlProvider.Logger.WriteExceptionLog("Import error.", lException);
+                return null;
+            }
+
+            return lSimpleDataTable;
+        }
+
         protected abstract List<SqlParameter> DeleteModel(TTYPE model);
 
         protected TTYPE LoadModel(SqlDataReader sqlDataReader)
@@ -193,6 +237,7 @@ namespace DbProviderWrapper.Persistance
         protected abstract List<SqlParameter> SaveModel(TTYPE model);
 
         protected abstract List<SqlParameter> UpdateModel(TTYPE model);
+        protected abstract List<SqlParameter> ImportModels(DataTable table);
 
         public abstract TTYPE Load(SqlDataReader sqlDataReader);
     }

@@ -21,5 +21,9 @@ namespace DbProviderWrapper.MsSql
         Task<SimpleDataTable<TTYPE>> SaveAsync(TTYPE model);
         SimpleDataTable<TTYPE> Update(TTYPE model);
         Task<SimpleDataTable<TTYPE>> UpdateAsync(TTYPE model);
+
+        SimpleDataTable<TTYPE> ImportTable(DataTable dataTable);
+        Task<SimpleDataTable<TTYPE>> ImportTableAsync(DataTable dataTable);
+
     }
 }

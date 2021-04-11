@@ -1,6 +1,6 @@
 ﻿namespace DbProviderWrapper.Interfaces
 {
-    public interface IDbConnectionStringProvider
+    public interface IMsSqlConnectionStringProvider
     {
         string GetMsSqlConnectionString();
     }

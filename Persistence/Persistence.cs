@@ -10,9 +10,9 @@ using DbProviderWrapper.MsSql;
 
 #endregion
 
-namespace DbProviderWrapper.Persistance
+namespace DbProviderWrapper.Persistence
 {
-    public abstract class Persistance<TTYPE> : IMsSqlPersistance<TTYPE>
+    public abstract class Persistence<TType> : IMsSqlPersistence<TType>
     {
         #region Fields
 
@@ -27,7 +27,7 @@ namespace DbProviderWrapper.Persistance
 
         #region Constructors
 
-        protected Persistance(
+        protected Persistence(
             string strLoadCommand,
             string strSaveCommand,
             string strUpdateCommand,
@@ -43,7 +43,7 @@ namespace DbProviderWrapper.Persistance
 
         #endregion
 
-        public virtual bool Delete(TTYPE model)
+        public virtual bool Delete(TType model)
         {
             try
             {
@@ -59,7 +59,7 @@ namespace DbProviderWrapper.Persistance
             return false;
         }
 
-        public virtual async Task<bool> DeleteAsync(TTYPE model)
+        public virtual async Task<bool> DeleteAsync(TType model)
         {
             try
             {
@@ -75,10 +75,10 @@ namespace DbProviderWrapper.Persistance
             return false;
         }
 
-        public virtual SimpleDataTable<TTYPE> Load(List<SqlParameter> parameters = null,
+        public virtual SimpleDataTable<TType> Load(List<SqlParameter> parameters = null,
             IsolationLevel isolationLevel = IsolationLevel.ReadCommitted)
         {
-            SimpleDataTable<TTYPE> lSimpleDataTable = new SimpleDataTable<TTYPE>();
+            SimpleDataTable<TType> lSimpleDataTable = new SimpleDataTable<TType>();
 
             _msSqlProvider
                 .StoredProc(_strLoadCommand, parameters ?? new List<SqlParameter>(), ref lSimpleDataTable, LoadModel,
@@ -87,10 +87,10 @@ namespace DbProviderWrapper.Persistance
             return lSimpleDataTable;
         }
 
-        public virtual async Task<SimpleDataTable<TTYPE>> LoadAsync(List<SqlParameter> parameters = null,
+        public virtual async Task<SimpleDataTable<TType>> LoadAsync(List<SqlParameter> parameters = null,
             IsolationLevel isolationLevel = IsolationLevel.ReadCommitted)
         {
-            SimpleDataTable<TTYPE> lSimpleDataTable = new SimpleDataTable<TTYPE>();
+            SimpleDataTable<TType> lSimpleDataTable = new SimpleDataTable<TType>();
 
             lSimpleDataTable = await _msSqlProvider
                 .StoredProcAsync(_strLoadCommand, parameters ?? new List<SqlParameter>(), lSimpleDataTable, LoadModel,
@@ -99,13 +99,12 @@ namespace DbProviderWrapper.Persistance
             return lSimpleDataTable;
         }
 
-        public virtual SimpleDataTable<TTYPE> Save(TTYPE model)
+        public virtual SimpleDataTable<TType> Save(TType model)
         {
-            SimpleDataTable<TTYPE> lSimpleDataTable = new SimpleDataTable<TTYPE>();
+            SimpleDataTable<TType> lSimpleDataTable = new SimpleDataTable<TType>();
             try
             {
-                TTYPE lInstance = Activator.CreateInstance<TTYPE>();
-                lSimpleDataTable.BindColumns(SaveModel(lInstance));
+                TType lInstance = Activator.CreateInstance<TType>();
                 List<SqlParameter> lSqlParameters = SaveModel(model);
                 _msSqlProvider
                     .StoredProc(_strSaveCommand, lSqlParameters ?? new List<SqlParameter>(), ref lSimpleDataTable,
@@ -120,13 +119,12 @@ namespace DbProviderWrapper.Persistance
             return lSimpleDataTable;
         }
 
-        public virtual async Task<SimpleDataTable<TTYPE>> SaveAsync(TTYPE model)
+        public virtual async Task<SimpleDataTable<TType>> SaveAsync(TType model)
         {
-            SimpleDataTable<TTYPE> lSimpleDataTable = new SimpleDataTable<TTYPE>();
+            SimpleDataTable<TType> lSimpleDataTable = new SimpleDataTable<TType>();
             try
             {
-                TTYPE lInstance = Activator.CreateInstance<TTYPE>();
-                lSimpleDataTable.BindColumns(SaveModel(lInstance));
+                TType lInstance = Activator.CreateInstance<TType>();
                 List<SqlParameter> lSqlParameters = SaveModel(model);
                 lSimpleDataTable = await _msSqlProvider
                     .StoredProcAsync(_strSaveCommand, lSqlParameters ?? new List<SqlParameter>(), lSimpleDataTable,
@@ -141,13 +139,12 @@ namespace DbProviderWrapper.Persistance
             return lSimpleDataTable;
         }
 
-        public virtual SimpleDataTable<TTYPE> Update(TTYPE model)
+        public virtual SimpleDataTable<TType> Update(TType model)
         {
-            SimpleDataTable<TTYPE> lSimpleDataTable = new SimpleDataTable<TTYPE>();
+            SimpleDataTable<TType> lSimpleDataTable = new SimpleDataTable<TType>();
             try
             {
-                TTYPE lInstance = Activator.CreateInstance<TTYPE>();
-                lSimpleDataTable.BindColumns(UpdateModel(lInstance));
+                TType lInstance = Activator.CreateInstance<TType>();
                 List<SqlParameter> lSqlParameters = UpdateModel(model);
                 _msSqlProvider
                     .StoredProc(_strUpdateCommand, lSqlParameters ?? new List<SqlParameter>(), ref lSimpleDataTable,
@@ -162,13 +159,12 @@ namespace DbProviderWrapper.Persistance
             return lSimpleDataTable;
         }
 
-        public virtual async Task<SimpleDataTable<TTYPE>> UpdateAsync(TTYPE model)
+        public virtual async Task<SimpleDataTable<TType>> UpdateAsync(TType model)
         {
-            SimpleDataTable<TTYPE> lSimpleDataTable = new SimpleDataTable<TTYPE>();
+            SimpleDataTable<TType> lSimpleDataTable = new SimpleDataTable<TType>();
             try
             {
-                TTYPE lInstance = Activator.CreateInstance<TTYPE>();
-                lSimpleDataTable.BindColumns(UpdateModel(lInstance));
+                TType lInstance = Activator.CreateInstance<TType>();
                 List<SqlParameter> lSqlParameters = UpdateModel(model);
                 lSimpleDataTable = await _msSqlProvider
                     .StoredProcAsync(_strUpdateCommand, lSqlParameters ?? new List<SqlParameter>(), lSimpleDataTable,
@@ -183,17 +179,17 @@ namespace DbProviderWrapper.Persistance
             return lSimpleDataTable;
         }
 
-        protected abstract List<SqlParameter> DeleteModel(TTYPE model);
+        protected abstract List<SqlParameter> DeleteModel(TType model);
 
-        protected TTYPE LoadModel(SqlDataReader sqlDataReader)
+        protected TType LoadModel(SqlDataReader sqlDataReader)
         {
             return Load(sqlDataReader);
         }
 
-        protected abstract List<SqlParameter> SaveModel(TTYPE model);
+        protected abstract List<SqlParameter> SaveModel(TType model);
 
-        protected abstract List<SqlParameter> UpdateModel(TTYPE model);
+        protected abstract List<SqlParameter> UpdateModel(TType model);
 
-        public abstract TTYPE Load(SqlDataReader sqlDataReader);
+        public abstract TType Load(SqlDataReader sqlDataReader);
     }
 }

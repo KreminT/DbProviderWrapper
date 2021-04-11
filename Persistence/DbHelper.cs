@@ -5,24 +5,24 @@ using System.Data.SqlClient;
 
 #endregion
 
-namespace DbProviderWrapper.Persistance
+namespace DbProviderWrapper.Persistence
 {
     public static class DbHelper
     {
-        public static TTYPE GetValue<TTYPE>(this SqlDataReader sqlDataReader, string name)
+        public static TType GetValue<TType>(this SqlDataReader sqlDataReader, string name)
         {
             object lValue = sqlDataReader[name];
 
             if (lValue == DBNull.Value)
                 return default;
 
-            if (typeof(TTYPE) == typeof(int) || typeof(TTYPE) == typeof(int?))
-                return (TTYPE) (object) Convert.ToInt32(lValue);
+            if (typeof(TType) == typeof(int) || typeof(TType) == typeof(int?))
+                return (TType) (object) Convert.ToInt32(lValue);
 
-            if (lValue == DBNull.Value || !(lValue is TTYPE))
+            if (lValue == DBNull.Value || !(lValue is TType))
                 return default;
 
-            return (TTYPE) lValue;
+            return (TType) lValue;
         }
 
         public static bool ColumnExists(SqlDataReader reader, string columnName)

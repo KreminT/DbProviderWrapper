@@ -7,7 +7,7 @@ using System.Data.SqlClient;
 using System.Linq;
 using System.Threading.Tasks;
 using DbProviderWrapper.Interfaces;
-using DbProviderWrapper.Persistance;
+using DbProviderWrapper.Persistence;
 
 #endregion
 
@@ -18,13 +18,13 @@ namespace DbProviderWrapper.MsSql
         #region Fields
 
         private readonly string _connectionString;
-        private IDbLogger _logger;
+        private readonly IDbLogger _logger;
 
         #endregion
 
         #region Constructors
 
-        public MsSqlProvider(IDbLogger logger, IDbConnectionStringProvider connectionStringProvider)
+        public MsSqlProvider(IDbLogger logger, IMsSqlConnectionStringProvider connectionStringProvider)
         {
             _logger = logger;
             _connectionString = connectionStringProvider.GetMsSqlConnectionString();
@@ -46,9 +46,10 @@ namespace DbProviderWrapper.MsSql
 
                 SqlTransaction lTransaction = lSqlConnection.BeginTransaction();
 
-                SqlCommand lSqlCommand = new SqlCommand(query);
-                lSqlCommand.Connection = lSqlConnection;
-                lSqlCommand.Transaction = lTransaction;
+                SqlCommand lSqlCommand = new SqlCommand(query)
+                {
+                    Connection = lSqlConnection, Transaction = lTransaction
+                };
 
                 List<IDictionary<string, object>> lData = new List<IDictionary<string, object>>();
 
@@ -57,12 +58,10 @@ namespace DbProviderWrapper.MsSql
                     SqlDataReader lSqlDataReader = lSqlCommand.ExecuteReader();
                     try
                     {
+                        IEnumerable<string> lEnumerable = columns as string[] ?? columns.ToArray();
                         while (lSqlDataReader.Read())
                         {
-                            Dictionary<string, object> lRow = new Dictionary<string, object>();
-
-                            foreach (string lColumn in columns)
-                                lRow.Add(lColumn, lSqlDataReader[lColumn]);
+                            Dictionary<string, object> lRow = lEnumerable.ToDictionary(column => column, column => lSqlDataReader[column]);
 
                             lData.Add(lRow);
                         }
@@ -74,7 +73,7 @@ namespace DbProviderWrapper.MsSql
                     }
                     catch (Exception lException)
                     {
-                        _logger.WriteExceptionLog(string.Format("MsSql command execution fail {0}", query),
+                        _logger.WriteExceptionLog($"MsSql command execution fail {query}",
                             lException);
 
                         lTransaction.Rollback();
@@ -88,7 +87,7 @@ namespace DbProviderWrapper.MsSql
                 }
                 catch (Exception lException)
                 {
-                    _logger.WriteExceptionLog(string.Format("MsSql command execution error {0}", query), lException);
+                    _logger.WriteExceptionLog($"MsSql command execution error {query}", lException);
 
                     lTransaction.Rollback();
                 }
@@ -114,9 +113,10 @@ namespace DbProviderWrapper.MsSql
 
                 SqlTransaction lTransaction = lSqlConnection.BeginTransaction();
 
-                SqlCommand lSqlCommand = new SqlCommand(query);
-                lSqlCommand.Connection = lSqlConnection;
-                lSqlCommand.Transaction = lTransaction;
+                SqlCommand lSqlCommand = new SqlCommand(query)
+                {
+                    Connection = lSqlConnection, Transaction = lTransaction
+                };
 
                 try
                 {
@@ -137,7 +137,7 @@ namespace DbProviderWrapper.MsSql
                     }
                     catch (Exception lException)
                     {
-                        _logger.WriteExceptionLog(string.Format("MsSql command execution fail {0}", query),
+                        _logger.WriteExceptionLog($"MsSql command execution fail {query}",
                             lException);
                     }
                     finally
@@ -151,7 +151,7 @@ namespace DbProviderWrapper.MsSql
                 }
                 catch (Exception lException)
                 {
-                    _logger.WriteExceptionLog(string.Format("MsSql command execution error {0}", query), lException);
+                    _logger.WriteExceptionLog($"MsSql command execution error {query}", lException);
 
                     lTransaction.Rollback();
                 }
@@ -181,17 +181,20 @@ namespace DbProviderWrapper.MsSql
 
                 SqlCommand lSqlCommand = null;
 
+                IEnumerable<SqlParameter> lSqlParameters = sqlParameters.ToList();
                 try
                 {
-                    lSqlCommand = new SqlCommand();
+                    lSqlCommand = new SqlCommand
+                    {
+                        Connection = lSqlConnection,
+                        Transaction = lTransaction,
+                        CommandText = procedureName,
+                        CommandType = CommandType.StoredProcedure
+                    };
 
-                    lSqlCommand.Connection = lSqlConnection;
-                    lSqlCommand.Transaction = lTransaction;
 
-                    lSqlCommand.CommandText = procedureName;
-                    lSqlCommand.CommandType = CommandType.StoredProcedure;
 
-                    foreach (SqlParameter lSqlParameter in sqlParameters)
+                    foreach (SqlParameter lSqlParameter in lSqlParameters)
                         lSqlCommand.Parameters.Add(lSqlParameter);
 
                     lSqlCommand.ExecuteNonQuery();
@@ -200,10 +203,10 @@ namespace DbProviderWrapper.MsSql
                 }
                 catch (Exception lException)
                 {
-                    _logger.WriteExceptionLog(string.Format("MsSql command execution error {0}", procedureName),
+                    _logger.WriteExceptionLog($"MsSql command execution error {procedureName}",
                         lException);
-                    _logger.WriteLog(string.Format("Parameters:\n{0}",
-                        string.Join("\n", sqlParameters.Select(x => x.ParameterName + "=" + x.Value).ToArray())));
+                    _logger.WriteLog(
+                        $"Parameters:\n{string.Join("\n", lSqlParameters.Select(x => x.ParameterName + "=" + x.Value).ToArray())}");
                     lTransaction.Rollback();
                 }
                 finally
@@ -230,6 +233,7 @@ namespace DbProviderWrapper.MsSql
 
                 SqlCommand lSqlCommand = null;
 
+                IEnumerable<SqlParameter> lSqlParameters = sqlParameters.ToList();
                 try
                 {
                     lSqlCommand = new SqlCommand
@@ -241,24 +245,24 @@ namespace DbProviderWrapper.MsSql
                     };
 
 
-                    foreach (SqlParameter lSqlParameter in sqlParameters)
+                    foreach (SqlParameter lSqlParameter in lSqlParameters)
                         lSqlCommand.Parameters.Add(lSqlParameter);
 
                     await lSqlCommand.ExecuteNonQueryAsync();
 
-                    await lTransaction.CommitAsync();
+                    lTransaction.Commit();
                 }
                 catch (Exception lException)
                 {
-                    _logger.WriteExceptionLog(string.Format("MsSql command execution error {0}", procedureName),
+                    _logger.WriteExceptionLog($"MsSql command execution error {procedureName}",
                         lException);
-                    _logger.WriteLog(string.Format("Parameters:\n{0}",
-                        string.Join("\n", sqlParameters.Select(x => x.ParameterName + "=" + x.Value).ToArray())));
-                    await lTransaction.RollbackAsync();
+                    _logger.WriteLog(
+                        $"Parameters:\n{string.Join("\n", lSqlParameters.Select(x => x.ParameterName + "=" + x.Value).ToArray())}");
+                    lTransaction.Rollback();
                 }
                 finally
                 {
-                    await DisposeCommandAsync(lSqlCommand, lTransaction, lSqlConnection);
+                    DisposeCommandAsync(lSqlCommand, lTransaction, lSqlConnection);
                 }
             }
             catch (Exception lException)
@@ -269,11 +273,11 @@ namespace DbProviderWrapper.MsSql
             return null;
         }
 
-        public void StoredProc<TTYPE>(
+        public void StoredProc<TType>(
             string procedureName,
             IEnumerable<SqlParameter> sqlParameters,
-            ref SimpleDataTable<TTYPE> simpleDataTable,
-            Func<SqlDataReader, TTYPE> LoadModel, IsolationLevel isolationLevel = IsolationLevel.ReadCommitted)
+            ref SimpleDataTable<TType> simpleDataTable,
+            Func<SqlDataReader, TType> loadModel, IsolationLevel isolationLevel = IsolationLevel.ReadCommitted)
         {
             try
             {
@@ -284,23 +288,25 @@ namespace DbProviderWrapper.MsSql
 
                 SqlCommand lSqlCommand = null;
 
+                IEnumerable<SqlParameter> lSqlParameters = sqlParameters as SqlParameter[] ?? sqlParameters.ToArray();
                 try
                 {
-                    lSqlCommand = new SqlCommand();
+                    lSqlCommand = new SqlCommand
+                    {
+                        Connection = lSqlConnection,
+                        Transaction = lTransaction,
+                        CommandText = procedureName,
+                        CommandType = CommandType.StoredProcedure
+                    };
 
-                    lSqlCommand.Connection = lSqlConnection;
-                    lSqlCommand.Transaction = lTransaction;
 
-                    lSqlCommand.CommandText = procedureName;
-                    lSqlCommand.CommandType = CommandType.StoredProcedure;
-
-                    foreach (SqlParameter lSqlParameter in sqlParameters)
+                    foreach (SqlParameter lSqlParameter in lSqlParameters)
                         lSqlCommand.Parameters.Add(lSqlParameter);
 
                     SqlDataReader lSqlDataReader = lSqlCommand.ExecuteReader();
 
                     while (lSqlDataReader.Read())
-                        simpleDataTable.AddNewRow(LoadModel(lSqlDataReader));
+                        simpleDataTable.AddNewRow(loadModel(lSqlDataReader));
 
                     lSqlDataReader.Close();
                     lSqlDataReader.Dispose();
@@ -309,10 +315,10 @@ namespace DbProviderWrapper.MsSql
                 }
                 catch (Exception lException)
                 {
-                    _logger.WriteExceptionLog(string.Format("MsSql command execution error {0}", procedureName),
+                    _logger.WriteExceptionLog($"MsSql command execution error {procedureName}",
                         lException);
-                    _logger.WriteLog(string.Format("Parameters:\n{0}",
-                        string.Join("\n", sqlParameters.Select(x => x.ParameterName + "=" + x.Value).ToArray())));
+                    _logger.WriteLog(
+                        $"Parameters:\n{string.Join("\n", lSqlParameters.Select(x => x.ParameterName + "=" + x.Value).ToArray())}");
                 }
                 finally
                 {
@@ -321,15 +327,15 @@ namespace DbProviderWrapper.MsSql
             }
             catch (Exception lException)
             {
-                _logger.WriteExceptionLog("MsSqlProvider.StoredProc<TTYPE>:" + procedureName, lException);
+                _logger.WriteExceptionLog("MsSqlProvider.StoredProc<TType>:" + procedureName, lException);
             }
         }
 
-        public async Task<SimpleDataTable<TTYPE>> StoredProcAsync<TTYPE>(
+        public async Task<SimpleDataTable<TType>> StoredProcAsync<TType>(
             string procedureName,
             IEnumerable<SqlParameter> sqlParameters,
-            SimpleDataTable<TTYPE> simpleDataTable,
-            Func<SqlDataReader, TTYPE> LoadModel, IsolationLevel isolationLevel = IsolationLevel.ReadCommitted)
+            SimpleDataTable<TType> simpleDataTable,
+            Func<SqlDataReader, TType> loadModel, IsolationLevel isolationLevel = IsolationLevel.ReadCommitted)
         {
             try
             {
@@ -340,6 +346,7 @@ namespace DbProviderWrapper.MsSql
 
                 SqlCommand lSqlCommand = null;
 
+                IEnumerable<SqlParameter> lSqlParameters = sqlParameters as SqlParameter[] ?? sqlParameters.ToArray();
                 try
                 {
                     lSqlCommand = new SqlCommand
@@ -349,29 +356,29 @@ namespace DbProviderWrapper.MsSql
                         CommandText = procedureName,
                         CommandType = CommandType.StoredProcedure
                     };
-                    foreach (SqlParameter lSqlParameter in sqlParameters)
+                    foreach (SqlParameter lSqlParameter in lSqlParameters)
                         lSqlCommand.Parameters.Add(lSqlParameter);
 
                     SqlDataReader lSqlDataReader = await lSqlCommand.ExecuteReaderAsync();
 
                     while (await lSqlDataReader.ReadAsync())
-                        simpleDataTable.AddNewRow(LoadModel(lSqlDataReader));
+                        simpleDataTable.AddNewRow(loadModel(lSqlDataReader));
 
-                    await lSqlDataReader.CloseAsync();
-                    await lSqlDataReader.DisposeAsync();
+                    lSqlDataReader.Close();
+                    lSqlDataReader.Dispose();
 
-                    await lTransaction.CommitAsync();
+                    lTransaction.Commit();
                 }
                 catch (Exception lException)
                 {
-                    _logger.WriteExceptionLog(string.Format("MsSql command execution error {0}", procedureName),
+                    _logger.WriteExceptionLog($"MsSql command execution error {procedureName}",
                         lException);
-                    _logger.WriteLog(string.Format("Parameters:\n{0}",
-                        string.Join("\n", sqlParameters.Select(x => x.ParameterName + "=" + x.Value).ToArray())));
+                    _logger.WriteLog(
+                        $"Parameters:\n{string.Join("\n", lSqlParameters.Select(x => x.ParameterName + "=" + x.Value).ToArray())}");
                 }
                 finally
                 {
-                    await DisposeCommandAsync(lSqlCommand, lTransaction, lSqlConnection);
+                    DisposeCommandAsync(lSqlCommand, lTransaction, lSqlConnection);
                 }
             }
             catch (Exception lException)
@@ -382,18 +389,18 @@ namespace DbProviderWrapper.MsSql
             return simpleDataTable;
         }
 
-        private async Task DisposeCommandAsync(SqlCommand lSqlCommand, SqlTransaction lTransaction,
-            SqlConnection lSqlConnection)
+        private void DisposeCommandAsync(SqlCommand sqlCommand, SqlTransaction transaction,
+            SqlConnection sqlConnection)
         {
-            if (lSqlCommand != null)
+            if (sqlCommand != null)
             {
-                lSqlCommand.Parameters.Clear();
-                await lSqlCommand.DisposeAsync();
+                sqlCommand.Parameters.Clear();
+                sqlCommand.Dispose();
             }
 
             try
             {
-                await lTransaction.DisposeAsync();
+                transaction.Dispose();
             }
             catch
             {
@@ -401,25 +408,25 @@ namespace DbProviderWrapper.MsSql
 
             try
             {
-                await lSqlConnection.CloseAsync();
-                await lSqlConnection.DisposeAsync();
+                sqlConnection.Close();
+                sqlConnection.Dispose();
             }
             catch
             {
             }
         }
 
-        private void DisposeCommand(SqlCommand lSqlCommand, SqlTransaction lTransaction, SqlConnection lSqlConnection)
+        private void DisposeCommand(SqlCommand sqlCommand, SqlTransaction transaction, SqlConnection sqlConnection)
         {
-            if (lSqlCommand != null)
+            if (sqlCommand != null)
             {
-                lSqlCommand.Parameters.Clear();
-                lSqlCommand.Dispose();
+                sqlCommand.Parameters.Clear();
+                sqlCommand.Dispose();
             }
 
             try
             {
-                lTransaction.Dispose();
+                transaction.Dispose();
             }
             catch
             {
@@ -427,8 +434,8 @@ namespace DbProviderWrapper.MsSql
 
             try
             {
-                lSqlConnection.Close();
-                lSqlConnection.Dispose();
+                sqlConnection.Close();
+                sqlConnection.Dispose();
             }
             catch
             {

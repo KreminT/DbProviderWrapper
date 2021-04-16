@@ -1,55 +1,53 @@
-﻿#region
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.SqlClient;
+using System.Data.Common;
 using System.Linq;
 using System.Threading.Tasks;
 using DbProviderWrapper.Helpers;
 using DbProviderWrapper.Interfaces;
 using DbProviderWrapper.Persistence;
+using MySql.Data.MySqlClient;
 
-#endregion
-
-namespace DbProviderWrapper.MsSql
+namespace DbProviderWrapper.MySql
 {
-    public class MsSqlProvider : IDbProvider
+    public class MySqlProvider : IDbProvider
     {
         #region Fields
 
         private readonly string _connectionString;
         private readonly IDbLogger _logger;
-        private readonly IParameterFactory<SqlParameter> _parameterFactory;
+        private IParameterFactory<MySqlParameter> _parameterFactory;
+        private IDbLogger _logger1;
 
         #endregion
 
         #region Constructors
 
-        public MsSqlProvider(IDbLogger logger, IConnectionStringProvider connectionStringProvider)
+        public MySqlProvider(IDbLogger logger, IConnectionStringProvider connectionStringProvider)
         {
             _logger = logger;
             _connectionString = connectionStringProvider.GetConnectionString();
-            _parameterFactory = new MsSqlParameterFactory();
+            _parameterFactory = new MySqlParameterFactory();
         }
 
         #endregion
 
         public IDbLogger Logger
         {
-            get { return _logger; }
+            get { return _logger1; }
         }
 
         public List<IDictionary<string, object>> Select(string query, IEnumerable<string> columns)
         {
             try
             {
-                SqlConnection lSqlConnection = new SqlConnection(_connectionString);
+                MySqlConnection lSqlConnection = new MySqlConnection(_connectionString);
                 lSqlConnection.Open();
 
-                SqlTransaction lTransaction = lSqlConnection.BeginTransaction();
+                MySqlTransaction lTransaction = lSqlConnection.BeginTransaction();
 
-                SqlCommand lSqlCommand = new SqlCommand(query)
+                MySqlCommand lSqlCommand = new MySqlCommand(query)
                 {
                     Connection = lSqlConnection, Transaction = lTransaction
                 };
@@ -58,7 +56,7 @@ namespace DbProviderWrapper.MsSql
 
                 try
                 {
-                    SqlDataReader lSqlDataReader = lSqlCommand.ExecuteReader();
+                    MySqlDataReader lSqlDataReader = lSqlCommand.ExecuteReader();
                     try
                     {
                         IEnumerable<string> lEnumerable = columns as string[] ?? columns.ToArray();
@@ -77,7 +75,7 @@ namespace DbProviderWrapper.MsSql
                     }
                     catch (Exception lException)
                     {
-                        _logger.WriteExceptionLog($"MsSql command execution fail {query}",
+                        _logger.WriteExceptionLog($"MySql command execution fail {query}",
                             lException);
 
                         lTransaction.Rollback();
@@ -111,19 +109,19 @@ namespace DbProviderWrapper.MsSql
         {
             try
             {
-                SqlConnection lSqlConnection = new SqlConnection(_connectionString);
+                MySqlConnection lSqlConnection = new MySqlConnection(_connectionString);
                 lSqlConnection.Open();
 
-                SqlTransaction lTransaction = lSqlConnection.BeginTransaction();
+                MySqlTransaction lTransaction = lSqlConnection.BeginTransaction();
 
-                SqlCommand lSqlCommand = new SqlCommand(query)
+                MySqlCommand lSqlCommand = new MySqlCommand(query)
                 {
                     Connection = lSqlConnection, Transaction = lTransaction
                 };
 
                 try
                 {
-                    SqlDataReader lSqlDataReader = lSqlCommand.ExecuteReader();
+                    MySqlDataReader lSqlDataReader = lSqlCommand.ExecuteReader();
 
                     try
                     {
@@ -140,7 +138,7 @@ namespace DbProviderWrapper.MsSql
                     }
                     catch (Exception lException)
                     {
-                        _logger.WriteExceptionLog($"MsSql command execution fail {query}",
+                        _logger.WriteExceptionLog($"MySql command execution fail {query}",
                             lException);
                     }
                     finally
@@ -154,7 +152,8 @@ namespace DbProviderWrapper.MsSql
                 }
                 catch (Exception lException)
                 {
-                    _logger.WriteExceptionLog($"MsSql command execution error {query}", lException);
+                    _logger.WriteExceptionLog($"MySql command execution fail {query}",
+                        lException);
 
                     lTransaction.Rollback();
                 }
@@ -167,27 +166,27 @@ namespace DbProviderWrapper.MsSql
             }
             catch (Exception lException)
             {
-                _logger.WriteExceptionLog("MsSqlProvider.SimpleSelect", lException);
+                _logger.WriteExceptionLog("MySqlProvider.SimpleSelect", lException);
             }
 
             return null;
         }
 
+
         public IDataReader StoredProc(string procedureName, IEnumerable<ISqlParameter> sqlParameters)
         {
             try
             {
-                SqlConnection lSqlConnection = new SqlConnection(_connectionString);
+                MySqlConnection lSqlConnection = new MySqlConnection(_connectionString);
                 lSqlConnection.Open();
 
-                SqlTransaction lTransaction = lSqlConnection.BeginTransaction();
+                MySqlTransaction lTransaction = lSqlConnection.BeginTransaction();
 
-                SqlCommand lSqlCommand = null;
-
-                IEnumerable<SqlParameter> lSqlParameters = sqlParameters.GetParameters(_parameterFactory);
+                MySqlCommand lSqlCommand = null;
+                IEnumerable<MySqlParameter> lSqlParameters = sqlParameters.GetParameters(_parameterFactory);
                 try
                 {
-                    lSqlCommand = new SqlCommand
+                    lSqlCommand = new MySqlCommand
                     {
                         Connection = lSqlConnection,
                         Transaction = lTransaction,
@@ -195,8 +194,7 @@ namespace DbProviderWrapper.MsSql
                         CommandType = CommandType.StoredProcedure
                     };
 
-
-                    foreach (SqlParameter lSqlParameter in lSqlParameters)
+                    foreach (MySqlParameter lSqlParameter in lSqlParameters)
                         lSqlCommand.Parameters.Add(lSqlParameter);
 
                     lSqlCommand.ExecuteNonQuery();
@@ -205,10 +203,10 @@ namespace DbProviderWrapper.MsSql
                 }
                 catch (Exception lException)
                 {
-                    _logger.WriteExceptionLog($"MsSql command execution error {procedureName}",
-                        lException);
+                    _logger.WriteExceptionLog(
+                        $"MySql command execution error {procedureName}", lException);
                     _logger.WriteLog(
-                        $"Parameters:\n{string.Join("\n", lSqlParameters.Select(x => x.ParameterName + "=" + x.Value).ToArray())}");
+                        $"sqlcommandDelete:\n{string.Join("\n", lSqlParameters.Select(x => x.ParameterName + "=" + x.Value).ToArray())}");
                     lTransaction.Rollback();
                 }
                 finally
@@ -218,28 +216,26 @@ namespace DbProviderWrapper.MsSql
             }
             catch (Exception lException)
             {
-                _logger.WriteExceptionLog("MsSqlProvider.StoredProc:" + procedureName, lException);
+                _logger.WriteExceptionLog("MySqlProvider.StoredProc:" + procedureName, lException);
             }
 
             return null;
         }
 
-        public async Task<IDataReader> StoredProcAsync(string procedureName,
-            IEnumerable<ISqlParameter> sqlParameters)
+        public async Task<IDataReader> StoredProcAsync(string procedureName, IEnumerable<ISqlParameter> sqlParameters)
         {
             try
             {
-                SqlConnection lSqlConnection = new SqlConnection(_connectionString);
+                MySqlConnection lSqlConnection = new MySqlConnection(_connectionString);
                 await lSqlConnection.OpenAsync();
 
-                SqlTransaction lTransaction = lSqlConnection.BeginTransaction();
+                MySqlTransaction lTransaction = await lSqlConnection.BeginTransactionAsync();
 
-                SqlCommand lSqlCommand = null;
-
-                IEnumerable<SqlParameter> lSqlParameters = sqlParameters.GetParameters(_parameterFactory);
+                MySqlCommand lSqlCommand = null;
+                IEnumerable<MySqlParameter> lSqlParameters = sqlParameters.GetParameters(_parameterFactory);
                 try
                 {
-                    lSqlCommand = new SqlCommand
+                    lSqlCommand = new MySqlCommand
                     {
                         Connection = lSqlConnection,
                         Transaction = lTransaction,
@@ -248,29 +244,29 @@ namespace DbProviderWrapper.MsSql
                     };
 
 
-                    foreach (SqlParameter lSqlParameter in lSqlParameters)
+                    foreach (MySqlParameter lSqlParameter in lSqlParameters)
                         lSqlCommand.Parameters.Add(lSqlParameter);
 
                     await lSqlCommand.ExecuteNonQueryAsync();
 
-                    lTransaction.Commit();
+                    await lTransaction.CommitAsync();
                 }
                 catch (Exception lException)
                 {
-                    _logger.WriteExceptionLog($"MsSql command execution error {procedureName}",
-                        lException);
+                    _logger.WriteExceptionLog(
+                        $"MySql command execution error {procedureName}", lException);
                     _logger.WriteLog(
-                        $"Parameters:\n{string.Join("\n", lSqlParameters.Select(x => x.ParameterName + "=" + x.Value).ToArray())}");
-                    lTransaction.Rollback();
+                        $"sqlcommandDelete:\n{string.Join("\n", lSqlParameters.Select(x => x.ParameterName + "=" + x.Value).ToArray())}");
+                    await lTransaction.RollbackAsync();
                 }
                 finally
                 {
-                    DisposeCommandAsync(lSqlCommand, lTransaction, lSqlConnection);
+                    await DisposeCommandAsync(lSqlCommand, lTransaction, lSqlConnection);
                 }
             }
             catch (Exception lException)
             {
-                _logger.WriteExceptionLog("MsSqlProvider.StoredProc:" + procedureName, lException);
+                _logger.WriteExceptionLog("MySqlProvider.StoredProc:" + procedureName, lException);
             }
 
             return null;
@@ -284,17 +280,16 @@ namespace DbProviderWrapper.MsSql
         {
             try
             {
-                SqlConnection lSqlConnection = new SqlConnection(_connectionString);
+                MySqlConnection lSqlConnection = new MySqlConnection(_connectionString);
                 lSqlConnection.Open();
 
-                SqlTransaction lTransaction = lSqlConnection.BeginTransaction(isolationLevel);
+                MySqlTransaction lTransaction = lSqlConnection.BeginTransaction(isolationLevel);
 
-                SqlCommand lSqlCommand = null;
-
-                IEnumerable<SqlParameter> lSqlParameters = sqlParameters.GetParameters(_parameterFactory);
+                MySqlCommand lSqlCommand = null;
+                IEnumerable<MySqlParameter> lSqlParameters = sqlParameters.GetParameters(_parameterFactory);
                 try
                 {
-                    lSqlCommand = new SqlCommand
+                    lSqlCommand = new MySqlCommand
                     {
                         Connection = lSqlConnection,
                         Transaction = lTransaction,
@@ -303,10 +298,10 @@ namespace DbProviderWrapper.MsSql
                     };
 
 
-                    foreach (SqlParameter lSqlParameter in lSqlParameters)
+                    foreach (MySqlParameter lSqlParameter in lSqlParameters)
                         lSqlCommand.Parameters.Add(lSqlParameter);
 
-                    SqlDataReader lSqlDataReader = lSqlCommand.ExecuteReader();
+                    MySqlDataReader lSqlDataReader = lSqlCommand.ExecuteReader();
 
                     while (lSqlDataReader.Read())
                         simpleDataTable.AddNewRow(loadModel(lSqlDataReader));
@@ -318,10 +313,10 @@ namespace DbProviderWrapper.MsSql
                 }
                 catch (Exception lException)
                 {
-                    _logger.WriteExceptionLog($"MsSql command execution error {procedureName}",
-                        lException);
+                    _logger.WriteExceptionLog(
+                        $"MySql command execution error {procedureName}", lException);
                     _logger.WriteLog(
-                        $"Parameters:\n{string.Join("\n", lSqlParameters.Select(x => x.ParameterName + "=" + x.Value).ToArray())}");
+                        $"sqlcommand:\n{string.Join("\n", lSqlParameters.Select(x => x.ParameterName + "=" + x.Value).ToArray())}");
                 }
                 finally
                 {
@@ -330,7 +325,7 @@ namespace DbProviderWrapper.MsSql
             }
             catch (Exception lException)
             {
-                _logger.WriteExceptionLog("MsSqlProvider.StoredProc<TType>:" + procedureName, lException);
+                _logger.WriteExceptionLog("MySqlProvider.StoredProc<TTYPE>:" + procedureName, lException);
             }
         }
 
@@ -342,84 +337,87 @@ namespace DbProviderWrapper.MsSql
         {
             try
             {
-                SqlConnection lSqlConnection = new SqlConnection(_connectionString);
+                MySqlConnection lSqlConnection = new MySqlConnection(_connectionString);
                 await lSqlConnection.OpenAsync();
 
-                SqlTransaction lTransaction = lSqlConnection.BeginTransaction(isolationLevel);
+                MySqlTransaction lTransaction = lSqlConnection.BeginTransaction(isolationLevel);
 
-                SqlCommand lSqlCommand = null;
-
-                IEnumerable<SqlParameter> lSqlParameters = sqlParameters.GetParameters(_parameterFactory);
+                MySqlCommand lSqlCommand = null;
+                IEnumerable<MySqlParameter> lSqlParameters = sqlParameters.GetParameters(_parameterFactory);
                 try
                 {
-                    lSqlCommand = new SqlCommand
+                    lSqlCommand = new MySqlCommand
                     {
                         Connection = lSqlConnection,
                         Transaction = lTransaction,
                         CommandText = procedureName,
                         CommandType = CommandType.StoredProcedure
                     };
-                    foreach (SqlParameter lSqlParameter in lSqlParameters)
+                    foreach (MySqlParameter lSqlParameter in lSqlParameters)
                         lSqlCommand.Parameters.Add(lSqlParameter);
 
-                    SqlDataReader lSqlDataReader = await lSqlCommand.ExecuteReaderAsync();
+                    DbDataReader lSqlDataReader = await lSqlCommand.ExecuteReaderAsync();
 
                     while (await lSqlDataReader.ReadAsync())
                         simpleDataTable.AddNewRow(loadModel(lSqlDataReader));
 
-                    lSqlDataReader.Close();
-                    lSqlDataReader.Dispose();
+                    await lSqlDataReader.CloseAsync();
+                    await lSqlDataReader.DisposeAsync();
 
-                    lTransaction.Commit();
+                    await lTransaction.CommitAsync();
                 }
                 catch (Exception lException)
                 {
-                    _logger.WriteExceptionLog($"MsSql command execution error {procedureName}",
-                        lException);
+                    _logger.WriteExceptionLog(
+                        $"MySql command execution error {procedureName}", lException);
                     _logger.WriteLog(
-                        $"Parameters:\n{string.Join("\n", lSqlParameters.Select(x => x.ParameterName + "=" + x.Value).ToArray())}");
+                        $"sqlcommand:\n{string.Join("\n", lSqlParameters.Select(x => x.ParameterName + "=" + x.Value).ToArray())}");
                 }
                 finally
                 {
-                    DisposeCommandAsync(lSqlCommand, lTransaction, lSqlConnection);
+                    await DisposeCommandAsync(lSqlCommand, lTransaction, lSqlConnection);
                 }
             }
             catch (Exception lException)
             {
-                _logger.WriteExceptionLog("MsSqlProvider.StoredProc<TTYPE>:" + procedureName, lException);
+                _logger.WriteExceptionLog("MySqlProvider.StoredProc<TTYPE>:" + procedureName, lException);
             }
 
             return simpleDataTable;
         }
 
-        private void DisposeCommandAsync(SqlCommand sqlCommand, SqlTransaction transaction,
-            SqlConnection sqlConnection)
+
+        private async Task DisposeCommandAsync(MySqlCommand sqlCommand, MySqlTransaction transaction,
+            MySqlConnection sqlConnection)
         {
             if (sqlCommand != null)
             {
                 sqlCommand.Parameters.Clear();
-                sqlCommand.Dispose();
+                await sqlCommand.DisposeAsync();
             }
 
             try
             {
-                transaction.Dispose();
+                await transaction.DisposeAsync();
             }
             catch
             {
+                // ignored
             }
 
             try
             {
-                sqlConnection.Close();
-                sqlConnection.Dispose();
+                await sqlConnection.CloseAsync();
+                await sqlConnection.DisposeAsync();
             }
             catch
             {
+                // ignored
             }
         }
 
-        private void DisposeCommand(SqlCommand sqlCommand, SqlTransaction transaction, SqlConnection sqlConnection)
+        private void DisposeCommand(MySqlCommand sqlCommand, MySqlTransaction transaction,
+            MySqlConnection sqlConnection)
         {
             if (sqlCommand != null)
             {
@@ -433,6 +431,7 @@ namespace DbProviderWrapper.MsSql
             }
             catch
             {
+                // ignored
             }
 
             try
@@ -442,7 +441,76 @@ namespace DbProviderWrapper.MsSql
             }
             catch
             {
+                // ignored
             }
+        }
+
+        public List<Dictionary<string, object>> Select(string query, List<string> columns)
+        {
+            try
+            {
+                MySqlConnection lSqlConnection = new MySqlConnection(_connectionString);
+                lSqlConnection.Open();
+
+                MySqlTransaction lTransaction = lSqlConnection.BeginTransaction();
+
+                MySqlCommand lSqlCommand = new MySqlCommand(query)
+                {
+                    Connection = lSqlConnection, Transaction = lTransaction
+                };
+
+                List<Dictionary<string, object>> lData = new List<Dictionary<string, object>>();
+
+                try
+                {
+                    MySqlDataReader lSqlDataReader = lSqlCommand.ExecuteReader();
+                    try
+                    {
+                        while (lSqlDataReader.Read())
+                        {
+                            Dictionary<string, object> lRow =
+                                columns.ToDictionary(column => column, column => lSqlDataReader[column]);
+
+                            lData.Add(lRow);
+                        }
+
+                        lSqlDataReader.Close();
+                        lSqlDataReader.Dispose();
+
+                        lTransaction.Commit();
+                    }
+                    catch (Exception lException)
+                    {
+                        _logger.WriteExceptionLog($"MySql command execution fail {query}",
+                            lException);
+
+                        lTransaction.Rollback();
+                    }
+                    finally
+                    {
+                        lSqlDataReader.Close();
+                        lSqlDataReader.Dispose();
+                    }
+                }
+                catch (Exception lException)
+                {
+                    _logger.WriteExceptionLog($"MySql command execution fail {query}",
+                        lException);
+
+                    lTransaction.Rollback();
+                }
+
+                DisposeCommand(lSqlCommand, lTransaction, lSqlConnection);
+
+                return lData;
+            }
+            catch (Exception lException)
+            {
+                _logger.WriteExceptionLog("MySqlProvider.Select", lException);
+                _logger.WriteLog(query);
+            }
+
+            return null;
         }
     }
 }

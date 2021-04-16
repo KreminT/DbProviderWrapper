@@ -11,11 +11,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="MySql.Data" Version="8.0.23" />
     <PackageReference Include="System.Data.SqlClient" Version="4.6.1" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="MySql\" />
   </ItemGroup>
 
 </Project>

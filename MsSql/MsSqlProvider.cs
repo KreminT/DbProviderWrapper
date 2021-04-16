@@ -6,6 +6,7 @@ using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
 using System.Threading.Tasks;
+using DbProviderWrapper.Helpers;
 using DbProviderWrapper.Interfaces;
 using DbProviderWrapper.Persistence;
 
@@ -13,12 +14,13 @@ using DbProviderWrapper.Persistence;
 
 namespace DbProviderWrapper.MsSql
 {
-    public class MsSqlProvider : IMsSqlProvider
+    public class MsSqlProvider : IDbProvider
     {
         #region Fields
 
         private readonly string _connectionString;
         private readonly IDbLogger _logger;
+        private readonly IParameterFactory<SqlParameter> _parameterFactory;
 
         #endregion
 
@@ -28,6 +30,7 @@ namespace DbProviderWrapper.MsSql
         {
             _logger = logger;
             _connectionString = connectionStringProvider.GetMsSqlConnectionString();
+            _parameterFactory = new MsSqlParameterFactory();
         }
 
         #endregion
@@ -61,7 +64,8 @@ namespace DbProviderWrapper.MsSql
                         IEnumerable<string> lEnumerable = columns as string[] ?? columns.ToArray();
                         while (lSqlDataReader.Read())
                         {
-                            Dictionary<string, object> lRow = lEnumerable.ToDictionary(column => column, column => lSqlDataReader[column]);
+                            Dictionary<string, object> lRow =
+                                lEnumerable.ToDictionary(column => column, column => lSqlDataReader[column]);
 
                             lData.Add(lRow);
                         }
@@ -170,7 +174,7 @@ namespace DbProviderWrapper.MsSql
             return null;
         }
 
-        public SqlDataReader StoredProc(string procedureName, IEnumerable<SqlParameter> sqlParameters)
+        public IDataReader StoredProc(string procedureName, IEnumerable<ISqlParameter> sqlParameters)
         {
             try
             {
@@ -181,7 +185,7 @@ namespace DbProviderWrapper.MsSql
 
                 SqlCommand lSqlCommand = null;
 
-                IEnumerable<SqlParameter> lSqlParameters = sqlParameters.ToList();
+                IEnumerable<SqlParameter> lSqlParameters = sqlParameters.GetParameters(_parameterFactory);
                 try
                 {
                     lSqlCommand = new SqlCommand
@@ -191,7 +195,6 @@ namespace DbProviderWrapper.MsSql
                         CommandText = procedureName,
                         CommandType = CommandType.StoredProcedure
                     };
-
 
 
                     foreach (SqlParameter lSqlParameter in lSqlParameters)
@@ -222,7 +225,8 @@ namespace DbProviderWrapper.MsSql
             return null;
         }
 
-        public async Task<SqlDataReader> StoredProcAsync(string procedureName, IEnumerable<SqlParameter> sqlParameters)
+        public async Task<IDataReader> StoredProcAsync(string procedureName,
+            IEnumerable<ISqlParameter> sqlParameters)
         {
             try
             {
@@ -233,7 +237,7 @@ namespace DbProviderWrapper.MsSql
 
                 SqlCommand lSqlCommand = null;
 
-                IEnumerable<SqlParameter> lSqlParameters = sqlParameters.ToList();
+                IEnumerable<SqlParameter> lSqlParameters = sqlParameters.GetParameters(_parameterFactory);
                 try
                 {
                     lSqlCommand = new SqlCommand
@@ -275,9 +279,9 @@ namespace DbProviderWrapper.MsSql
 
         public void StoredProc<TType>(
             string procedureName,
-            IEnumerable<SqlParameter> sqlParameters,
+            IEnumerable<ISqlParameter> sqlParameters,
             ref SimpleDataTable<TType> simpleDataTable,
-            Func<SqlDataReader, TType> loadModel, IsolationLevel isolationLevel = IsolationLevel.ReadCommitted)
+            Func<IDataReader, TType> loadModel, IsolationLevel isolationLevel = IsolationLevel.ReadCommitted)
         {
             try
             {
@@ -288,7 +292,7 @@ namespace DbProviderWrapper.MsSql
 
                 SqlCommand lSqlCommand = null;
 
-                IEnumerable<SqlParameter> lSqlParameters = sqlParameters as SqlParameter[] ?? sqlParameters.ToArray();
+                IEnumerable<SqlParameter> lSqlParameters = sqlParameters.GetParameters(_parameterFactory);
                 try
                 {
                     lSqlCommand = new SqlCommand
@@ -333,9 +337,9 @@ namespace DbProviderWrapper.MsSql
 
         public async Task<SimpleDataTable<TType>> StoredProcAsync<TType>(
             string procedureName,
-            IEnumerable<SqlParameter> sqlParameters,
+            IEnumerable<ISqlParameter> sqlParameters,
             SimpleDataTable<TType> simpleDataTable,
-            Func<SqlDataReader, TType> loadModel, IsolationLevel isolationLevel = IsolationLevel.ReadCommitted)
+            Func<IDataReader, TType> loadModel, IsolationLevel isolationLevel = IsolationLevel.ReadCommitted)
         {
             try
             {
@@ -346,7 +350,7 @@ namespace DbProviderWrapper.MsSql
 
                 SqlCommand lSqlCommand = null;
 
-                IEnumerable<SqlParameter> lSqlParameters = sqlParameters as SqlParameter[] ?? sqlParameters.ToArray();
+                IEnumerable<SqlParameter> lSqlParameters = sqlParameters.GetParameters(_parameterFactory);
                 try
                 {
                     lSqlCommand = new SqlCommand

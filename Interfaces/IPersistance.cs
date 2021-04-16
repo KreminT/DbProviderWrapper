@@ -1,20 +1,19 @@
 ﻿using System.Collections.Generic;
 using System.Data;
-using System.Data.SqlClient;
 using System.Threading.Tasks;
 using DbProviderWrapper.Persistence;
 
-namespace DbProviderWrapper.MsSql
+namespace DbProviderWrapper.Interfaces
 {
-    public interface IMsSqlPersistence<TType>
+    public interface IPersistence<TType>
     {
         bool Delete(TType model);
         Task<bool> DeleteAsync(TType model);
 
-        SimpleDataTable<TType> Load(List<SqlParameter> parameters = null,
+        SimpleDataTable<TType> Load(List<ISqlParameter> parameters = null,
             IsolationLevel isolationLevel = IsolationLevel.ReadCommitted);
 
-        Task<SimpleDataTable<TType>> LoadAsync(List<SqlParameter> parameters = null,
+        Task<SimpleDataTable<TType>> LoadAsync(List<ISqlParameter> parameters = null,
             IsolationLevel isolationLevel = IsolationLevel.ReadCommitted);
 
         SimpleDataTable<TType> Save(TType model);

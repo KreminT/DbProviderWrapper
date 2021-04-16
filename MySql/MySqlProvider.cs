@@ -17,8 +17,7 @@ namespace DbProviderWrapper.MySql
 
         private readonly string _connectionString;
         private readonly IDbLogger _logger;
-        private IParameterFactory<MySqlParameter> _parameterFactory;
-        private IDbLogger _logger1;
+        private readonly IParameterFactory<MySqlParameter> _parameterFactory;
 
         #endregion
 
@@ -35,7 +34,7 @@ namespace DbProviderWrapper.MySql
 
         public IDbLogger Logger
         {
-            get { return _logger1; }
+            get { return _logger; }
         }
 
         public List<IDictionary<string, object>> Select(string query, IEnumerable<string> columns)

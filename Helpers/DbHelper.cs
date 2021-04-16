@@ -5,7 +5,7 @@ using System.Data.SqlClient;
 
 #endregion
 
-namespace DbProviderWrapper.Persistence
+namespace DbProviderWrapper.Helpers
 {
     public static class DbHelper
     {

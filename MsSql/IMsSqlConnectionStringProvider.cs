@@ -1,4 +1,4 @@
-﻿namespace DbProviderWrapper.Interfaces
+﻿namespace DbProviderWrapper.MsSql
 {
     public interface IMsSqlConnectionStringProvider
     {

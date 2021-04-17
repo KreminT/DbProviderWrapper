@@ -1,15 +1,14 @@
 ﻿#region
 
 using System;
-using System.Data.SqlClient;
-
+using System.Data;
 #endregion
 
 namespace DbProviderWrapper.Helpers
 {
     public static class DbHelper
     {
-        public static TType GetValue<TType>(this SqlDataReader sqlDataReader, string name)
+        public static TType GetValue<TType>(this IDataReader sqlDataReader, string name)
         {
             object lValue = sqlDataReader[name];
 
@@ -25,10 +24,10 @@ namespace DbProviderWrapper.Helpers
             return (TType) lValue;
         }
 
-        public static bool ColumnExists(SqlDataReader reader, string columnName)
+        public static bool ColumnExists(IDataReader reader, string columnName)
         {
-            for (int i = 0; i < reader.FieldCount; i++)
-                if (reader.GetName(i) == columnName)
+            for (int lI = 0; lI < reader.FieldCount; lI++)
+                if (reader.GetName(lI) == columnName)
                     return true;
 
             return false;

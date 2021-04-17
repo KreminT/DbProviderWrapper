@@ -1,6 +1,4 @@
-﻿using DbProviderWrapper.Persistence;
-
-namespace DbProviderWrapper.Interfaces
+﻿namespace DbProviderWrapper.Models.Interfaces
 {
     public interface IObjectState
     {

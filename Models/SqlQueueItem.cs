@@ -1,9 +1,9 @@
 ﻿using System.Collections.Generic;
-using DbProviderWrapper.Interfaces;
+using DbProviderWrapper.Models.Interfaces;
 
-namespace DbProviderWrapper.Persistence
+namespace DbProviderWrapper.Models
 {
-    public class SqlQueueItem:ISqlQueueItem
+    public class SqlQueueItem : ISqlQueueItem
     {
         #region Fields
 
@@ -22,8 +22,6 @@ namespace DbProviderWrapper.Persistence
 
         #endregion
 
-        #region Properties
-
         public IEnumerable<ISqlParameter> Parameters
         {
             get { return _parameters; }
@@ -35,7 +33,5 @@ namespace DbProviderWrapper.Persistence
             get { return _commandName; }
             set { _commandName = value; }
         }
-
-        #endregion
     }
 }

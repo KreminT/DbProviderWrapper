@@ -1,4 +1,4 @@
-﻿namespace DbProviderWrapper.Interfaces
+﻿namespace DbProviderWrapper.Builders
 {
     public interface IParameterFactory<out TParameter>
     {

@@ -1,9 +1,9 @@
 ﻿using System.Collections.Generic;
 using System.Data;
 using System.Threading.Tasks;
-using DbProviderWrapper.Persistence;
+using DbProviderWrapper.Models.Interfaces;
 
-namespace DbProviderWrapper.Interfaces
+namespace DbProviderWrapper.Persistence
 {
     public interface IPersistence<TType>
     {

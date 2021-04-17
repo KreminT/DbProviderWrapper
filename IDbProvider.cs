@@ -2,9 +2,11 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Threading.Tasks;
+using DbProviderWrapper.Helpers;
+using DbProviderWrapper.Models.Interfaces;
 using DbProviderWrapper.Persistence;
 
-namespace DbProviderWrapper.Interfaces
+namespace DbProviderWrapper
 {
     public interface IDbProvider
     {

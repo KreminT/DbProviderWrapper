@@ -1,4 +1,4 @@
-﻿namespace DbProviderWrapper.Persistence
+﻿namespace DbProviderWrapper.Models
 {
     public enum ObjectState
     {

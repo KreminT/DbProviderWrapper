@@ -1,5 +1,5 @@
 ﻿using System.Data.SqlClient;
-using DbProviderWrapper.Interfaces;
+using DbProviderWrapper.Builders;
 
 namespace DbProviderWrapper.MsSql
 {

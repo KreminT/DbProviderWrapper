@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace DbProviderWrapper.Interfaces
+namespace DbProviderWrapper.Models.Interfaces
 {
     public interface ISqlQueueItem
     {

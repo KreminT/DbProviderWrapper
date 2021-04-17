@@ -1,6 +1,7 @@
-﻿using DbProviderWrapper.Interfaces;
+﻿using DbProviderWrapper.Builders;
+using DbProviderWrapper.Models.Interfaces;
 
-namespace DbProviderWrapper.Persistence
+namespace DbProviderWrapper.Models
 {
     public class SqlParameter<TValue> : ISqlParameter
     {
@@ -23,22 +24,27 @@ namespace DbProviderWrapper.Persistence
 
         #region Properties
 
-        protected string Name
-        {
-            get { return _name; }
-        }
-
-        protected TValue Value
+        public TValue Value
         {
             get { return _value; }
         }
 
         #endregion
 
+        public string Name
+        {
+            get { return _name; }
+        }
+
+        object ISqlParameter.Value
+        {
+            get { return Value; }
+        }
+
 
         TParameter ISqlParameter.GetParameter<TParameter>(IParameterFactory<TParameter> factory)
         {
-            return factory.CreateParameter(_name,_value);
+            return factory.CreateParameter(_name, _value);
         }
     }
 }

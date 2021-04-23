@@ -55,7 +55,7 @@ namespace DbProviderWrapper.AbstractExecutor
         protected virtual TType Load<TType>(IDataReader dataReader)
         {
             TType lInstance = Activator.CreateInstance<TType>();
-            foreach ((string lKey, PropertyInfo lPropertyInfo) in _reflectionHelper.GetProperties())
+            foreach ((string lKey, PropertyInfo lPropertyInfo) in _reflectionHelper.GetProperties<TType>(lInstance))
                 if (DbHelper.ColumnExists(dataReader, lKey))
                 {
                     object lValue = dataReader[lKey];

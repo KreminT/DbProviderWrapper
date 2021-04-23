@@ -1,9 +1,9 @@
 ﻿using System.Collections.Generic;
 using System.Reflection;
 
-namespace DbProviderWrapper.Helpers
+namespace DbProviderWrapper.Mapping
 {
-    public interface IReflectionHelper
+    public interface IPropertiesMapping
     {
         IDictionary<string, PropertyInfo> GetProperties();
     }

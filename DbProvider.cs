@@ -8,10 +8,11 @@ using DbProviderWrapper.Builders;
 using DbProviderWrapper.Helpers;
 using DbProviderWrapper.Models.Interfaces;
 using DbProviderWrapper.Persistence;
+using DbProviderWrapper.QueueExecution;
 
 namespace DbProviderWrapper
 {
-    public class DbProvider : IDbProvider
+    public class DbProvider : IDbProvider, IDbQueueProvider
     {
         #region Fields
 
@@ -350,6 +351,72 @@ namespace DbProviderWrapper
             return simpleDataTable;
         }
 
+        public DbConnection CreateConnection()
+        {
+            return _providerFactory.CreateConnection(_connectionStringProvider);
+        }
+
+        public async Task<bool> StoredProcAsync(string procedureName, IEnumerable<ISqlParameter> parameters,
+            DbConnection connection, DbTransaction transaction)
+        {
+            bool lRes = true;
+            try
+            {
+                DbCommand lSqlCommand = null;
+                parameters = parameters?.ToList();
+
+                try
+                {
+                    lSqlCommand = _providerFactory.CreateCommand(connection, transaction, procedureName,
+                        CommandType.StoredProcedure, parameters);
+
+                    await lSqlCommand.ExecuteNonQueryAsync();
+                }
+                catch (Exception lException)
+                {
+                    _logger.WriteExceptionLog(
+                        $"{_providerFactory.DatabaseType}  command execution error {procedureName}",
+                        lException);
+                    _logger.WriteLog(
+                        $"Parameters:\n{string.Join("\n", (parameters ?? Array.Empty<ISqlParameter>()).Select(x => x.Name + "=" + x.Value).ToArray())}");
+                    await transaction.RollbackAsync();
+                }
+                finally
+                {
+                    await DisposeCommandAsync(lSqlCommand);
+                }
+            }
+            catch (Exception lException)
+            {
+                _logger.WriteExceptionLog("MsSqlProvider.StoredProc:" + procedureName, lException);
+                lRes = false;
+            }
+
+            return lRes;
+        }
+
+        public async Task DisposeConnectionAsync(DbTransaction transaction, DbConnection sqlConnection)
+        {
+            try
+            {
+                await transaction.DisposeAsync();
+            }
+            catch
+            {
+                // ignored
+            }
+
+            try
+            {
+                await sqlConnection.CloseAsync();
+                await sqlConnection.DisposeAsync();
+            }
+            catch
+            {
+                // ignored
+            }
+        }
+
         private static async Task DisposeCommandAsync(DbCommand sqlCommand, DbTransaction transaction,
             DbConnection sqlConnection)
         {
@@ -405,6 +472,15 @@ namespace DbProviderWrapper
             catch
             {
                 // ignored
+            }
+        }
+
+        private async Task DisposeCommandAsync(DbCommand sqlCommand)
+        {
+            if (sqlCommand != null)
+            {
+                sqlCommand.Parameters.Clear();
+                await sqlCommand.DisposeAsync();
             }
         }
     }

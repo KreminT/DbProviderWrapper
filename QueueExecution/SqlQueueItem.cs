@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using DbProviderWrapper.Models.Interfaces;
 
-namespace DbProviderWrapper.Models
+namespace DbProviderWrapper.QueueExecution
 {
     public class SqlQueueItem : ISqlQueueItem
     {

@@ -5,12 +5,13 @@ using System.Collections.Generic;
 using System.Data;
 using System.Threading.Tasks;
 using DbProviderWrapper.Models.Interfaces;
+using DbProviderWrapper.QueueExecution;
 
 #endregion
 
 namespace DbProviderWrapper.Persistence
 {
-    public abstract class Persistence<TType> : IPersistence<TType>
+    public abstract class Persistence<TType> : IPersistence<TType>,ISqlQueued<TType>
     {
         #region Fields
 
@@ -184,5 +185,19 @@ namespace DbProviderWrapper.Persistence
         protected abstract List<ISqlParameter> UpdateModel(TType model);
 
         public abstract TType LoadModel(IDataReader sqlDataReader);
+        public ISqlQueueItem GetDeleteQueueItem(TType model)
+        {
+            return new SqlQueueItem(DeleteModel(model),_strDeleteCommand);
+        }
+
+        public ISqlQueueItem GetSaveQueueItem(TType model)
+        {
+            return new SqlQueueItem(SaveModel(model),_strSaveCommand);
+        }
+
+        public ISqlQueueItem GetUpdateQueueItem(TType model)
+        {
+            return new SqlQueueItem(UpdateModel(model),_strUpdateCommand);
+        }
     }
 }

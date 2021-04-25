@@ -6,11 +6,17 @@ using DbProviderWrapper.Helpers;
 
 namespace DbProviderWrapper.Mapping
 {
-    public class PropertiesMapper : IPropertiesMapping
+    public class PropertiesMapper<TEntity> : IPropertiesMapping
     {
+        private readonly TEntity _entity;
         #region Fields
 
         private readonly Dictionary<string, PropertyInfo> _propertyInfos = new Dictionary<string, PropertyInfo>();
+
+        public PropertiesMapper(TEntity entity)
+        {
+            _entity = entity;
+        }
 
         #endregion
 
@@ -19,10 +25,10 @@ namespace DbProviderWrapper.Mapping
             return _propertyInfos;
         }
 
-        public void MapProperty<TEntity, TProperty>(TEntity entity, string dbColumnName,
+        public void MapProperty<TProperty>(string dbColumnName,
             Expression<Func<TEntity, TProperty>> property)
         {
-            _propertyInfos.Add(dbColumnName, entity.GetPropertyInfo(property));
+            _propertyInfos.Add(dbColumnName, _entity.GetPropertyInfo(property));
         }
     }
 }

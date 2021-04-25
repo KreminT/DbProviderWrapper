@@ -14,7 +14,7 @@ namespace DbProviderWrapper.AbstractExecutor
         #region Fields
 
         private readonly IDbProvider _provider;
-        private readonly ISqlParametersGenerator _sqlParameters;
+        private readonly ISqlParametersBuilder _sqlParameters;
         private readonly IReflectionHelper _reflectionHelper;
         private readonly IDbLogger _logger;
 
@@ -22,7 +22,7 @@ namespace DbProviderWrapper.AbstractExecutor
 
         #region Constructors
 
-        public AbstractExecutor(IDbProvider provider, ISqlParametersGenerator sqlParameters,
+        public AbstractExecutor(IDbProvider provider, ISqlParametersBuilder sqlParameters,
             IReflectionHelper reflectionHelper, IDbLogger logger)
         {
             _provider = provider;

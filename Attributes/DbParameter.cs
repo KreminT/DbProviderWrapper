@@ -1,0 +1,23 @@
+﻿using System;
+
+namespace DbProviderWrapper.Attributes
+{
+    public class DbParameter : Attribute
+    {
+        #region Fields
+
+        private string _name;
+
+        #endregion
+
+        #region Properties
+
+        public string Name
+        {
+            get { return _name; }
+            set { _name = value; }
+        }
+
+        #endregion
+    }
+}

@@ -14,7 +14,7 @@ namespace DbProviderWrapper.Models
 
         #region Constructors
 
-        protected SqlParameter(string name, TValue value)
+        public SqlParameter(string name, TValue value)
         {
             _name = name;
             _value = value;

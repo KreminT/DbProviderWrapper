@@ -1,9 +1,9 @@
 ﻿using System.Collections.Generic;
 using DbProviderWrapper.Models.Interfaces;
 
-namespace DbProviderWrapper.Helpers
+namespace DbProviderWrapper.AbstractExecutor
 {
-    public interface ISqlParametersGenerator
+    public interface ISqlParametersBuilder
     {
         List<ISqlParameter> BuildSqlParameters<TTypeArgs>(TTypeArgs args);
     }

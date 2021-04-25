@@ -10,7 +10,7 @@ namespace DbProviderWrapper.AbstractExecutor.ReflectionHelpersImpl
         public IDictionary<string, PropertyInfo> GetProperties<TType>(TType obj)
         {
             Type lArgsType = typeof(TType);
-            Dictionary<string, PropertyInfo> lInfo = new Dictionary<string, PropertyInfo>();
+            Dictionary<string, PropertyInfo> lInfo=new Dictionary<string, PropertyInfo>(); 
             foreach (PropertyInfo lPropertyInfo in lArgsType.GetProperties())
             {
                 DbColumn lSqlArgumentAttribute = lPropertyInfo.GetCustomAttribute<DbColumn>();
@@ -23,7 +23,6 @@ namespace DbProviderWrapper.AbstractExecutor.ReflectionHelpersImpl
                         continue;
                     }
                 }
-
                 lInfo.Add(lPropertyInfo.Name, lPropertyInfo);
             }
 

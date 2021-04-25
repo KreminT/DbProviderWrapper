@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
@@ -38,6 +39,31 @@ namespace DbProviderWrapper.Helpers
                     $"Expression '{propertyLambda}' refers to a property that is not from type {lType}.");
 
             return lPropInfo;
+        }
+
+        internal static bool IsNullOrEmpty(this object value)
+        {
+            switch (value)
+            {
+                case null:
+                case IEnumerator lEnumerator when !lEnumerator.MoveNext():
+                    return true;
+            }
+
+            Type lType = value.GetType();
+            object lDefValue;
+            if (lType == typeof(string))
+                lDefValue = "";
+            else if (lType == typeof(bool))
+                lDefValue = null;
+            else
+                lDefValue = Activator.CreateInstance(lType);
+
+            if (typeof(IEnumerable).IsAssignableFrom(lType))
+            {
+            }
+
+            return Equals(value, lDefValue);
         }
     }
 }

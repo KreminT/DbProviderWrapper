@@ -32,5 +32,6 @@ namespace DbProviderWrapper.Helpers
 
             return false;
         }
+
     }
 }

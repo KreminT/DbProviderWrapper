@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Reflection;
-using DbProviderWrapper.Attributes;
+using DbProviderWrapper.AbstractExecutor.Attributes;
 
 namespace DbProviderWrapper.AbstractExecutor.ReflectionHelpersImpl
 {

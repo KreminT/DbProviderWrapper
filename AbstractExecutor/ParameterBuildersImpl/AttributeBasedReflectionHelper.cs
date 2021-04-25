@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using DbProviderWrapper.Attributes;
+using DbProviderWrapper.AbstractExecutor.Attributes;
 using DbProviderWrapper.Helpers;
 using DbProviderWrapper.Models;
 using DbProviderWrapper.Models.Interfaces;

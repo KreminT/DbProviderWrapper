@@ -1,8 +1,9 @@
 ﻿using System;
 
-namespace DbProviderWrapper.Attributes
+namespace DbProviderWrapper.AbstractExecutor.Attributes
 {
-    public class DbParameter : Attribute
+    public class DbColumn
+        : Attribute
     {
         #region Fields
 

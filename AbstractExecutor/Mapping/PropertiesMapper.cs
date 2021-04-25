@@ -4,7 +4,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 using DbProviderWrapper.Helpers;
 
-namespace DbProviderWrapper.Mapping
+namespace DbProviderWrapper.AbstractExecutor.Mapping
 {
     public class PropertiesMapper<TEntity> : IPropertiesMapping
     {

@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using DbProviderWrapper.AbstractExecutor.Mapping;
 using DbProviderWrapper.Helpers;
-using DbProviderWrapper.Mapping;
 using DbProviderWrapper.Models;
 using DbProviderWrapper.Models.Interfaces;
 

@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Reflection;
 
-namespace DbProviderWrapper.Mapping
+namespace DbProviderWrapper.AbstractExecutor.Mapping
 {
     public interface IPropertiesMapping
     {

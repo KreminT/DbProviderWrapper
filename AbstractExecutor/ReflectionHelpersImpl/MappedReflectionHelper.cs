@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Reflection;
-using DbProviderWrapper.Mapping;
+using DbProviderWrapper.AbstractExecutor.Mapping;
 
 namespace DbProviderWrapper.AbstractExecutor.ReflectionHelpersImpl
 {

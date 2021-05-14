@@ -9,6 +9,7 @@ using DbProviderWrapper.Helpers;
 using DbProviderWrapper.Models.Interfaces;
 using DbProviderWrapper.Persistence;
 using DbProviderWrapper.QueueExecution;
+using Microsoft.Extensions.Logging;
 
 namespace DbProviderWrapper
 {
@@ -17,14 +18,14 @@ namespace DbProviderWrapper
         #region Fields
 
         private readonly IDbProviderFactory _providerFactory;
-        private readonly IDbLogger _logger;
+        private readonly ILogger _logger;
         private readonly IConnectionStringProvider _connectionStringProvider;
 
         #endregion
 
         #region Constructors
 
-        public DbProvider(IDbLogger logger, IConnectionStringProvider connectionStringProvider,
+        public DbProvider(ILogger logger, IConnectionStringProvider connectionStringProvider,
             IDbProviderFactory factory)
         {
             _logger = logger;
@@ -34,7 +35,7 @@ namespace DbProviderWrapper
 
         #endregion
 
-        public IDbLogger Logger
+        public ILogger Logger
         {
             get { return _logger; }
         }
@@ -74,7 +75,7 @@ namespace DbProviderWrapper
                     }
                     catch (Exception lException)
                     {
-                        _logger.WriteExceptionLog($"{_providerFactory.DatabaseType} command execution fail {query}",
+                        _logger.LogError($"{_providerFactory.DatabaseType} command execution fail {query}",
                             lException);
 
                         lTransaction.Rollback();
@@ -87,7 +88,7 @@ namespace DbProviderWrapper
                 }
                 catch (Exception lException)
                 {
-                    _logger.WriteExceptionLog($"{_providerFactory.DatabaseType}  command execution error {query}",
+                    _logger.LogError($"{_providerFactory.DatabaseType}  command execution error {query}",
                         lException);
 
                     lTransaction.Rollback();
@@ -99,7 +100,7 @@ namespace DbProviderWrapper
             }
             catch (Exception lException)
             {
-                _logger.WriteExceptionLog("DbProvider.Select", lException);
+                _logger.LogError("DbProvider.Select", lException);
             }
 
             return null;
@@ -136,7 +137,7 @@ namespace DbProviderWrapper
                     }
                     catch (Exception lException)
                     {
-                        _logger.WriteExceptionLog($"{_providerFactory.DatabaseType}  command execution fail {query}",
+                        _logger.LogError($"{_providerFactory.DatabaseType}  command execution fail {query}",
                             lException);
                     }
                     finally
@@ -149,7 +150,7 @@ namespace DbProviderWrapper
                 }
                 catch (Exception lException)
                 {
-                    _logger.WriteExceptionLog($"{_providerFactory.DatabaseType}  command execution error {query}",
+                    _logger.LogError($"{_providerFactory.DatabaseType}  command execution error {query}",
                         lException);
 
                     lTransaction.Rollback();
@@ -163,7 +164,7 @@ namespace DbProviderWrapper
             }
             catch (Exception lException)
             {
-                _logger.WriteExceptionLog("DbProvider.SimpleSelect", lException);
+                _logger.LogError("DbProvider.SimpleSelect", lException);
             }
 
             return null;
@@ -191,10 +192,10 @@ namespace DbProviderWrapper
                 }
                 catch (Exception lException)
                 {
-                    _logger.WriteExceptionLog(
+                    _logger.LogError(
                         $"{_providerFactory.DatabaseType}  command execution error {procedureName}",
                         lException);
-                    _logger.WriteLog(
+                    _logger.LogError(
                         $"Parameters:\n{string.Join("\n", sqlParameters?.Select(x => x.Name + "=" + x.Value).ToArray() ?? Array.Empty<string>())}");
                     lTransaction.Rollback();
                 }
@@ -205,7 +206,7 @@ namespace DbProviderWrapper
             }
             catch (Exception lException)
             {
-                _logger.WriteExceptionLog("DbProvider.StoredProc:" + procedureName, lException);
+                _logger.LogError("DbProvider.StoredProc:" + procedureName, lException);
             }
 
             return null;
@@ -233,10 +234,10 @@ namespace DbProviderWrapper
                 }
                 catch (Exception lException)
                 {
-                    _logger.WriteExceptionLog(
+                    _logger.LogError(
                         $"{_providerFactory.DatabaseType}  command execution error {procedureName}",
                         lException);
-                    _logger.WriteLog(
+                    _logger.LogError(
                         $"Parameters:\n{string.Join("\n", (sqlParameters ?? Array.Empty<ISqlParameter>()).Select(x => x.Name + "=" + x.Value).ToArray())}");
                     await lTransaction.RollbackAsync();
                 }
@@ -247,7 +248,7 @@ namespace DbProviderWrapper
             }
             catch (Exception lException)
             {
-                _logger.WriteExceptionLog("DbProvider.StoredProc:" + procedureName, lException);
+                _logger.LogError("DbProvider.StoredProc:" + procedureName, lException);
             }
 
             return null;
@@ -284,10 +285,10 @@ namespace DbProviderWrapper
                 }
                 catch (Exception lException)
                 {
-                    _logger.WriteExceptionLog(
+                    _logger.LogError(
                         $"{_providerFactory.DatabaseType}  command execution error {procedureName}",
                         lException);
-                    _logger.WriteLog(
+                    _logger.LogError(
                         $"Parameters:\n{string.Join("\n", (sqlParameters ?? Array.Empty<ISqlParameter>()).Select(x => x.Name + "=" + x.Value).ToArray())}");
                 }
                 finally
@@ -297,7 +298,7 @@ namespace DbProviderWrapper
             }
             catch (Exception lException)
             {
-                _logger.WriteExceptionLog("DbProvider.StoredProc<TType>:" + procedureName, lException);
+                _logger.LogError("DbProvider.StoredProc<TType>:" + procedureName, lException);
             }
         }
 
@@ -332,10 +333,10 @@ namespace DbProviderWrapper
                 }
                 catch (Exception lException)
                 {
-                    _logger.WriteExceptionLog(
+                    _logger.LogError(
                         $"{_providerFactory.DatabaseType}  command execution error {procedureName}",
                         lException);
-                    _logger.WriteLog(
+                    _logger.LogError(
                         $"Parameters:\n{string.Join("\n", (sqlParameters ?? Array.Empty<ISqlParameter>()).Select(x => x.Name + "=" + x.Value).ToArray())}");
                 }
                 finally
@@ -345,7 +346,7 @@ namespace DbProviderWrapper
             }
             catch (Exception lException)
             {
-                _logger.WriteExceptionLog("DbProvider.StoredProc<TTYPE>:" + procedureName, lException);
+                _logger.LogError("DbProvider.StoredProc<TTYPE>:" + procedureName, lException);
             }
 
             return simpleDataTable;
@@ -374,10 +375,10 @@ namespace DbProviderWrapper
                 }
                 catch (Exception lException)
                 {
-                    _logger.WriteExceptionLog(
+                    _logger.LogError(
                         $"{_providerFactory.DatabaseType}  command execution error {procedureName}",
                         lException);
-                    _logger.WriteLog(
+                    _logger.LogError(
                         $"Parameters:\n{string.Join("\n", (parameters ?? Array.Empty<ISqlParameter>()).Select(x => x.Name + "=" + x.Value).ToArray())}");
                     await transaction.RollbackAsync();
                 }
@@ -388,7 +389,7 @@ namespace DbProviderWrapper
             }
             catch (Exception lException)
             {
-                _logger.WriteExceptionLog("MsSqlProvider.StoredProc:" + procedureName, lException);
+                _logger.LogError("MsSqlProvider.StoredProc:" + procedureName, lException);
                 lRes = false;
             }
 

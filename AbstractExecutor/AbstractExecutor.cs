@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using DbProviderWrapper.Helpers;
 using DbProviderWrapper.Models.Interfaces;
 using DbProviderWrapper.Persistence;
+using Microsoft.Extensions.Logging;
 
 namespace DbProviderWrapper.AbstractExecutor
 {
@@ -16,14 +17,14 @@ namespace DbProviderWrapper.AbstractExecutor
         private readonly IDbProvider _provider;
         private readonly ISqlParametersBuilder _sqlParameters;
         private readonly IReflectionHelper _reflectionHelper;
-        private readonly IDbLogger _logger;
+        private readonly ILogger _logger;
 
         #endregion
 
         #region Constructors
 
         public AbstractExecutor(IDbProvider provider, ISqlParametersBuilder sqlParameters,
-            IReflectionHelper reflectionHelper, IDbLogger logger)
+            IReflectionHelper reflectionHelper, ILogger logger)
         {
             _provider = provider;
             _sqlParameters = sqlParameters;
@@ -45,7 +46,7 @@ namespace DbProviderWrapper.AbstractExecutor
             }
             catch (Exception lException)
             {
-                _logger.WriteExceptionLog("AbstractExecutor error.", lException);
+                _logger.LogError("AbstractExecutor error.", lException);
                 return null;
             }
 

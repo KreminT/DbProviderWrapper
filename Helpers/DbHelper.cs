@@ -79,6 +79,25 @@ namespace DbProviderWrapper.Helpers
             }
         }
 
+        public static object NullIf(this byte value)
+        {
+            if (value == 0)
+                return DBNull.Value;
+            return value;
+        }
+
+        public static object NullIf(byte? lValue)
+        {
+            switch (lValue)
+            {
+                case null:
+                case 0:
+                    return DBNull.Value;
+                default:
+                    return lValue.Value;
+            }
+        }
+
         public static object NullIf(this DateTime date)
         {
             if (date < DateTime.Now.AddYears(-20))

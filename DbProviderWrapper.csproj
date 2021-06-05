@@ -7,9 +7,9 @@
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <RepositoryUrl>https://github.com/KreminT/DbProviderWrapper</RepositoryUrl>
-    <Version>2.0.4</Version>
-    <AssemblyVersion>2.0.4.02</AssemblyVersion>
-    <FileVersion>2.0.4.02</FileVersion>
+    <Version>2.0.5</Version>
+    <AssemblyVersion>2.0.5.01</AssemblyVersion>
+    <FileVersion>2.0.5.01</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>

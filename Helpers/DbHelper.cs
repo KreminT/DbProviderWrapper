@@ -86,15 +86,15 @@ namespace DbProviderWrapper.Helpers
             return value;
         }
 
-        public static object NullIf(byte? lValue)
+        public static object NullIf(byte? value)
         {
-            switch (lValue)
+            switch (value)
             {
                 case null:
                 case 0:
                     return DBNull.Value;
                 default:
-                    return lValue.Value;
+                    return value.Value;
             }
         }
 

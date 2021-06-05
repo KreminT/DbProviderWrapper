@@ -86,7 +86,7 @@ namespace DbProviderWrapper.Helpers
             return value;
         }
 
-        public static object NullIf(byte? value)
+        public static object NullIf(this byte? value)
         {
             switch (value)
             {

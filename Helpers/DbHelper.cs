@@ -67,7 +67,7 @@ namespace DbProviderWrapper.Helpers
             return value;
         }
 
-        public static object NullIf(double? lValue)
+        public static object NullIf(this double? lValue)
         {
             switch (lValue)
             {

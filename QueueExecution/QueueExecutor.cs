@@ -6,14 +6,15 @@ using System.Threading.Tasks;
 using DbProviderWrapper.Helpers;
 using DbProviderWrapper.Models;
 using DbProviderWrapper.Models.Interfaces;
+using Microsoft.Extensions.Logging;
 
 namespace DbProviderWrapper.QueueExecution
 {
     public class QueueExecutor
     {
         #region Fields
-
-        private readonly IDbLogger _logger;
+        
+        private readonly ILogger _logger;
         private readonly IDbQueueProvider _provider;
 
         private Queue<ISqlQueueItem> _items = new Queue<ISqlQueueItem>();
@@ -22,7 +23,7 @@ namespace DbProviderWrapper.QueueExecution
 
         #region Constructors
 
-        public QueueExecutor(IDbLogger logger, IDbQueueProvider provider)
+        public QueueExecutor(ILogger logger, IDbQueueProvider provider)
         {
             _logger = logger;
             _provider = provider;
@@ -76,7 +77,7 @@ namespace DbProviderWrapper.QueueExecution
             }
             catch (Exception e)
             {
-                _logger.WriteExceptionLog("Queue Executor", e);
+                _logger.LogError("Queue Executor", e);
                 lResult = false;
             }
             finally

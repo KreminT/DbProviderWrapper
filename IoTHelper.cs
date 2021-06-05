@@ -5,6 +5,7 @@ using DbProviderWrapper.Helpers;
 using DbProviderWrapper.MsSql;
 using DbProviderWrapper.MySql;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace DbProviderWrapper
 {
@@ -45,7 +46,7 @@ namespace DbProviderWrapper
             {
                 if (!_providers.ContainsKey(key))
                 {
-                    DbProvider lProvider = new DbProvider(serviceProvider.GetService<IDbLogger>(),
+                    DbProvider lProvider = new DbProvider(serviceProvider.GetService<ILogger>(),
                         serviceProvider.GetService<ConnectionStringProviderResolver>()?.Invoke(key),
                         serviceProvider.GetService<DbProviderFactoryResolver>()?.Invoke(key));
                     _providers[key] = lProvider;

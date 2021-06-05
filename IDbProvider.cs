@@ -10,7 +10,6 @@ namespace DbProviderWrapper
 {
     public interface IDbProvider
     {
-        IDbLogger Logger { get; }
         List<IDictionary<string, object>> Select(string query, IEnumerable<string> columns);
         object SimpleSelect(string query);
         IDataReader StoredProc(string procedureName, IEnumerable<ISqlParameter> sqlParameters);

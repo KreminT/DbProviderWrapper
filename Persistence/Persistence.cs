@@ -6,12 +6,13 @@ using System.Data;
 using System.Threading.Tasks;
 using DbProviderWrapper.Models.Interfaces;
 using DbProviderWrapper.QueueExecution;
+using Microsoft.Extensions.Logging;
 
 #endregion
 
 namespace DbProviderWrapper.Persistence
 {
-    public abstract class Persistence<TType> : IPersistence<TType>,ISqlQueued<TType>
+    public abstract class Persistence<TType> : IPersistence<TType>, ISqlQueued<TType>
     {
         #region Fields
 
@@ -21,6 +22,7 @@ namespace DbProviderWrapper.Persistence
         private readonly string _strUpdateCommand;
 
         private readonly IDbProvider _msSqlProvider;
+        private readonly ILogger _logger;
 
         #endregion
 
@@ -31,13 +33,14 @@ namespace DbProviderWrapper.Persistence
             string strSaveCommand,
             string strUpdateCommand,
             string strDeleteCommand,
-            IDbProvider msSqlProvider)
+            IDbProvider msSqlProvider, ILogger logger)
         {
             _strLoadCommand = strLoadCommand;
             _strSaveCommand = strSaveCommand;
             _strUpdateCommand = strUpdateCommand;
             _strDeleteCommand = strDeleteCommand;
             _msSqlProvider = msSqlProvider;
+            _logger = logger;
         }
 
         #endregion
@@ -52,7 +55,7 @@ namespace DbProviderWrapper.Persistence
             }
             catch (Exception lException)
             {
-                _msSqlProvider.Logger.WriteExceptionLog("Delete error.", lException);
+                _logger.LogError("Delete error.", lException);
             }
 
             return false;
@@ -68,7 +71,7 @@ namespace DbProviderWrapper.Persistence
             }
             catch (Exception lException)
             {
-                _msSqlProvider.Logger.WriteExceptionLog("Delete error.", lException);
+                _logger.LogError("Delete error.", lException);
             }
 
             return false;
@@ -111,7 +114,7 @@ namespace DbProviderWrapper.Persistence
             }
             catch (Exception lException)
             {
-                _msSqlProvider.Logger.WriteExceptionLog("Save error.", lException);
+                _logger.LogError("Save error.", lException);
                 return null;
             }
 
@@ -131,7 +134,7 @@ namespace DbProviderWrapper.Persistence
             }
             catch (Exception lException)
             {
-                _msSqlProvider.Logger.WriteExceptionLog("Save error.", lException);
+                _logger.LogError("Save error.", lException);
                 return null;
             }
 
@@ -151,7 +154,7 @@ namespace DbProviderWrapper.Persistence
             }
             catch (Exception lException)
             {
-                _msSqlProvider.Logger.WriteExceptionLog("Update error.", lException);
+                _logger.LogError("Update error.", lException);
                 return null;
             }
 
@@ -171,11 +174,26 @@ namespace DbProviderWrapper.Persistence
             }
             catch (Exception lException)
             {
-                _msSqlProvider.Logger.WriteExceptionLog("Update error.", lException);
+                _logger.LogError("Update error.", lException);
                 return null;
             }
 
             return lSimpleDataTable;
+        }
+
+        public ISqlQueueItem GetDeleteQueueItem(TType model)
+        {
+            return new SqlQueueItem(DeleteModel(model), _strDeleteCommand);
+        }
+
+        public ISqlQueueItem GetSaveQueueItem(TType model)
+        {
+            return new SqlQueueItem(SaveModel(model), _strSaveCommand);
+        }
+
+        public ISqlQueueItem GetUpdateQueueItem(TType model)
+        {
+            return new SqlQueueItem(UpdateModel(model), _strUpdateCommand);
         }
 
         protected abstract List<ISqlParameter> DeleteModel(TType model);
@@ -185,19 +203,5 @@ namespace DbProviderWrapper.Persistence
         protected abstract List<ISqlParameter> UpdateModel(TType model);
 
         public abstract TType LoadModel(IDataReader sqlDataReader);
-        public ISqlQueueItem GetDeleteQueueItem(TType model)
-        {
-            return new SqlQueueItem(DeleteModel(model),_strDeleteCommand);
-        }
-
-        public ISqlQueueItem GetSaveQueueItem(TType model)
-        {
-            return new SqlQueueItem(SaveModel(model),_strSaveCommand);
-        }
-
-        public ISqlQueueItem GetUpdateQueueItem(TType model)
-        {
-            return new SqlQueueItem(UpdateModel(model),_strUpdateCommand);
-        }
     }
 }

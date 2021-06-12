@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using DbProviderWrapper.AbstractExecutor;
 using DbProviderWrapper.Builders;
 using DbProviderWrapper.Helpers;
 using DbProviderWrapper.MsSql;
@@ -11,6 +12,8 @@ namespace DbProviderWrapper
 {
     public static class IoTHelper
     {
+        public delegate IAbstractExecutor AbstractExecutorResolver(string key);
+
         public delegate IConnectionStringProvider ConnectionStringProviderResolver(string key);
 
         public delegate IDbProvider DbProviderResolver(string key);
@@ -53,6 +56,14 @@ namespace DbProviderWrapper
                 }
 
                 return _providers[key];
+            });
+            services.AddTransient<AbstractExecutorResolver>(serviceProvider => key =>
+            {
+                DbProviderResolver lDbProviderResolver = serviceProvider.GetService<DbProviderResolver>();
+                if (lDbProviderResolver != null)
+                    return new AbstractExecutor.AbstractExecutor(lDbProviderResolver.Invoke(key),
+                        serviceProvider.GetService<ILogger>());
+                throw new ArgumentException("Unknown IAbstractExecutor");
             });
         }
 

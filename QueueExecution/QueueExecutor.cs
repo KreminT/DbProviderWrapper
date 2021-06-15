@@ -13,10 +13,9 @@ namespace DbProviderWrapper.QueueExecution
     {
         #region Constructors
 
-        public QueueExecutor(ILogger logger, IDbQueueProvider provider)
+        public QueueExecutor(ILogger logger)
         {
             _logger = logger;
-            _provider = provider;
         }
 
         #endregion
@@ -42,12 +41,12 @@ namespace DbProviderWrapper.QueueExecution
             _items.Enqueue(new SqlQueueItem(parameters, procedure));
         }
 
-        public async Task<bool> Execute()
+        public async Task<bool> Execute(IDbQueueProvider provider)
         {
             ISqlQueueItem item;
             bool lResult = true;
 
-            DbConnection lConnection = _provider.CreateConnection();
+            DbConnection lConnection = provider.CreateConnection();
             DbTransaction lTransaction = null;
             try
             {
@@ -55,7 +54,7 @@ namespace DbProviderWrapper.QueueExecution
                 lTransaction = await lConnection.BeginTransactionAsync();
                 while (_items.Any() && (item = _items.Dequeue()) != null)
                 {
-                    lResult &= await _provider
+                    lResult &= await provider
                         .StoredProcAsync(item.CommandName, item.Parameters, lConnection, lTransaction);
                     if (!lResult)
                         break;
@@ -72,7 +71,7 @@ namespace DbProviderWrapper.QueueExecution
             }
             finally
             {
-                await _provider.DisposeConnectionAsync(lTransaction, lConnection);
+                await provider.DisposeConnectionAsync(lTransaction, lConnection);
             }
 
             return lResult;
@@ -81,7 +80,6 @@ namespace DbProviderWrapper.QueueExecution
         #region Fields
 
         private readonly ILogger _logger;
-        private readonly IDbQueueProvider _provider;
 
         private readonly Queue<ISqlQueueItem> _items = new Queue<ISqlQueueItem>();
 

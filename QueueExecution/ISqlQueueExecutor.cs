@@ -8,6 +8,6 @@ namespace DbProviderWrapper.QueueExecution
     {
         void AddToQueue<T>(ISqlQueued<T> persistence, T model) where T : IObjectState;
         void AddToQueue(string procedure, IEnumerable<ISqlParameter> parameters);
-        Task<bool> Execute();
+        Task<bool> Execute(IDbQueueProvider provider);
     }
 }

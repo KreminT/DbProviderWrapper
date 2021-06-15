@@ -3,24 +3,14 @@ using System.Collections.Generic;
 using System.Data.Common;
 using System.Linq;
 using System.Threading.Tasks;
-using DbProviderWrapper.Helpers;
 using DbProviderWrapper.Models;
 using DbProviderWrapper.Models.Interfaces;
 using Microsoft.Extensions.Logging;
 
 namespace DbProviderWrapper.QueueExecution
 {
-    public class QueueExecutor
+    public class QueueExecutor : ISqlQueueExecutor
     {
-        #region Fields
-        
-        private readonly ILogger _logger;
-        private readonly IDbQueueProvider _provider;
-
-        private Queue<ISqlQueueItem> _items = new Queue<ISqlQueueItem>();
-
-        #endregion
-
         #region Constructors
 
         public QueueExecutor(ILogger logger, IDbQueueProvider provider)
@@ -87,5 +77,14 @@ namespace DbProviderWrapper.QueueExecution
 
             return lResult;
         }
+
+        #region Fields
+
+        private readonly ILogger _logger;
+        private readonly IDbQueueProvider _provider;
+
+        private readonly Queue<ISqlQueueItem> _items = new Queue<ISqlQueueItem>();
+
+        #endregion
     }
 }

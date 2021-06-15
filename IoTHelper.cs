@@ -5,6 +5,7 @@ using DbProviderWrapper.Builders;
 using DbProviderWrapper.Helpers;
 using DbProviderWrapper.MsSql;
 using DbProviderWrapper.MySql;
+using DbProviderWrapper.QueueExecution;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -18,6 +19,8 @@ namespace DbProviderWrapper
 
         public delegate IDbProvider DbProviderResolver(string key);
 
+        public delegate IDbQueueProvider DbQueueProviderResolver(string key);
+
         public const string MSSQL = "MSSQL";
         public const string MYSQL = "MYSQL";
 
@@ -26,11 +29,13 @@ namespace DbProviderWrapper
         public static void DbProviderRegister(this IServiceCollection services,
             ConnectionStringProviderResolver connectionStringProviderResolver)
         {
+            _providers = new Dictionary<string, DbProvider>();
+
             services.AddSingleton<MySqlDbProviderFactory>();
             services.AddSingleton<MsSqlDbProviderFactory>();
 
             services.AddSingleton(connectionStringProviderResolver);
-            services.AddSingleton<DbProviderFactoryResolver>(serviceProvider => key =>
+            services.AddTransient<DbProviderFactoryResolver>(serviceProvider => key =>
             {
                 switch (key)
                 {
@@ -43,20 +48,10 @@ namespace DbProviderWrapper
                 }
             });
 
-            _providers = new Dictionary<string, DbProvider>();
 
-            services.AddTransient<DbProviderResolver>(serviceProvider => key =>
-            {
-                if (!_providers.ContainsKey(key))
-                {
-                    DbProvider lProvider = new DbProvider(serviceProvider.GetService<ILogger>(),
-                        serviceProvider.GetService<ConnectionStringProviderResolver>()?.Invoke(key),
-                        serviceProvider.GetService<DbProviderFactoryResolver>()?.Invoke(key));
-                    _providers[key] = lProvider;
-                }
+            services.AddTransient<DbProviderResolver>(serviceProvider => key => GetProvider(serviceProvider, key));
+            services.AddTransient<DbQueueProviderResolver>(serviceProvider => key => GetProvider(serviceProvider, key));
 
-                return _providers[key];
-            });
             services.AddTransient<AbstractExecutorResolver>(serviceProvider => key =>
             {
                 DbProviderResolver lDbProviderResolver = serviceProvider.GetService<DbProviderResolver>();
@@ -65,6 +60,19 @@ namespace DbProviderWrapper
                         serviceProvider.GetService<ILogger>());
                 throw new ArgumentException("Unknown IAbstractExecutor");
             });
+            services.Add(new ServiceDescriptor(typeof(ISqlQueueExecutor), typeof(QueueExecutor),
+                ServiceLifetime.Singleton));
+        }
+
+        private static DbProvider GetProvider(IServiceProvider serviceProvider, string key)
+        {
+            if (_providers.ContainsKey(key)) return _providers[key];
+            DbProvider lProvider = new DbProvider(serviceProvider.GetService<ILogger>(),
+                serviceProvider.GetService<ConnectionStringProviderResolver>()?.Invoke(key),
+                serviceProvider.GetService<DbProviderFactoryResolver>()?.Invoke(key));
+            _providers[key] = lProvider;
+
+            return _providers[key];
         }
 
         private delegate IDbProviderFactory DbProviderFactoryResolver(string key);
